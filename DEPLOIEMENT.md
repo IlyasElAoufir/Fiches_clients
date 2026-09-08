@@ -52,6 +52,9 @@ Surveiller la consommation les premiers jours : App Service → Quotas.
 
 - Runtime **Node 22 LTS**, système **Linux**, région proche des serveurs SQL.
 - Palier **F1 (Gratuit)**.
+- Le nom choisi devient l'adresse publique : `<nom>.azurewebsites.net`,
+  avec certificat TLS fourni. Un domaine personnalise n'est pas
+  disponible sur F1 — il exige un palier payant.
 - Configuration → Général : commande de démarrage `node server.js`.
   (« Always On » n'existe pas sur F1 — voir l'étape 5.)
 

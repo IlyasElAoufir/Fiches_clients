@@ -144,18 +144,23 @@ extraites ni dans le bundle client.
 ## Déploiement
 
 Les serveurs SQL n'ont **aucune ouverture vers Internet** : ils acceptent les
-adresses explicitement autorisées et les ressources Azure. C'est la contrainte
-qui commande le choix de l'hébergeur.
+adresses explicitement autorisées et les ressources Azure. C'est cette
+contrainte, et non le coût, qui commande le choix de l'hébergeur.
 
-- **[DEPLOIEMENT-GCP.md](DEPLOIEMENT-GCP.md)** — Cloud Run, avec une adresse de
-  sortie fixe à faire autoriser au pare-feu. Voie retenue pour le domaine
-  personnalisé.
-- **[DEPLOIEMENT.md](DEPLOIEMENT.md)** — Azure App Service, qui ne demande
-  aucune modification du pare-feu.
+**Voie retenue — [DEPLOIEMENT.md](DEPLOIEMENT.md)** : Azure App Service, palier
+gratuit. Les ressources Azure étant déjà autorisées, **aucune règle de pare-feu
+n'est à modifier**. L'adresse `<nom>.azurewebsites.net` et son certificat TLS
+sont fournis sans frais. Le palier gratuit ne proposant pas « Always On »,
+l'application est maintenue éveillée par un appel régulier à `/api/health`.
 
-L'application expose `/api/health`, seule route accessible sans
-authentification : elle n'ouvre aucune connexion aux bases et ne révèle ni
-version ni configuration.
+**Alternative étudiée — [DEPLOIEMENT-GCP.md](DEPLOIEMENT-GCP.md)** : Cloud Run.
+Techniquement viable, mais Cloud Run sort avec des adresses variables : il faut
+une adresse fixe (Cloud NAT, facturée à l'heure) **et** faire ouvrir le
+pare-feu de la production à une adresse hors Azure. Plus coûteux et plus
+risqué, pour un résultat équivalent.
+
+`/api/health` est la seule route accessible sans authentification : elle
+n'ouvre aucune connexion aux bases et ne révèle ni version, ni configuration.
 
 ## Licence
 

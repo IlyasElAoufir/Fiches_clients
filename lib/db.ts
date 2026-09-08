@@ -96,6 +96,23 @@ type PoolKey = `${EnvId}::${string}`
 
 const pools = new Map<PoolKey, Promise<sql.ConnectionPool>>()
 
+/**
+ * Memoire courte des bases injoignables.
+ *
+ * Sans elle, une base hors ligne coute `connectTimeout` a CHAQUE requete : une
+ * fiche client en emet sept, soit pres de deux minutes d'attente avant de
+ * pouvoir afficher quoi que ce soit. La page finissait par expirer au lieu de
+ * se degrader.
+ *
+ * Une fois une connexion echouee, les tentatives suivantes vers le meme couple
+ * (environnement, base) echouent immediatement pendant ce delai. La fiche
+ * s'affiche alors en quelques secondes, avec ses indicateurs marques comme
+ * indisponibles. Le delai est court : une base qui revient est reprise a la
+ * tentative suivante.
+ */
+const DELAI_BASE_INJOIGNABLE = 60_000
+const injoignables = new Map<PoolKey, number>()
+
 function baseConfig(server: string, database: string): sql.config {
   return {
     server,
@@ -129,6 +146,14 @@ async function getPool(env: EnvId, database: string): Promise<sql.ConnectionPool
   const db = assertSafeDatabaseName(database)
   const key: PoolKey = `${env}::${db}`
 
+  const echecRecent = injoignables.get(key)
+  if (echecRecent !== undefined) {
+    if (Date.now() - echecRecent < DELAI_BASE_INJOIGNABLE) {
+      throw new DatabaseUnavailableError(db, 'echec de connexion recent')
+    }
+    injoignables.delete(key)
+  }
+
   const existing = pools.get(key)
   if (existing) {
     try {
@@ -142,8 +167,13 @@ async function getPool(env: EnvId, database: string): Promise<sql.ConnectionPool
 
   const created = new sql.ConnectionPool(baseConfig(serverFor(env), db))
     .connect()
+    .then((pool) => {
+      injoignables.delete(key)
+      return pool
+    })
     .catch((err: unknown) => {
       pools.delete(key)
+      injoignables.set(key, Date.now())
       throw err
     })
 

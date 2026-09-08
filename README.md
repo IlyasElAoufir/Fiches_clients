@@ -145,19 +145,18 @@ extraites ni dans le bundle client.
 
 Les serveurs SQL n'ont **aucune ouverture vers Internet** : ils acceptent les
 adresses explicitement autorisées et les ressources Azure. C'est cette
-contrainte, et non le coût, qui commande le choix de l'hébergeur.
+contrainte qui commande le déploiement.
 
-**Voie retenue — [DEPLOIEMENT.md](DEPLOIEMENT.md)** : Azure App Service, palier
-gratuit. Les ressources Azure étant déjà autorisées, **aucune règle de pare-feu
-n'est à modifier**. L'adresse `<nom>.azurewebsites.net` et son certificat TLS
-sont fournis sans frais. Le palier gratuit ne proposant pas « Always On »,
-l'application est maintenue éveillée par un appel régulier à `/api/health`.
+**Voie retenue — [DEPLOIEMENT-GCP.md](DEPLOIEMENT-GCP.md)** : Google Cloud Run,
+joint sur l'adresse `novaclients-<identifiant>.<région>.run.app` fournie avec
+HTTPS. Cloud Run sortant avec des adresses variables, tout le trafic est routé
+par une adresse fixe (Cloud NAT) — **cette adresse doit être autorisée sur le
+pare-feu de PROD et d'INT**, faute de quoi l'application démarre mais ne lit
+aucune donnée.
 
-**Alternative étudiée — [DEPLOIEMENT-GCP.md](DEPLOIEMENT-GCP.md)** : Cloud Run.
-Techniquement viable, mais Cloud Run sort avec des adresses variables : il faut
-une adresse fixe (Cloud NAT, facturée à l'heure) **et** faire ouvrir le
-pare-feu de la production à une adresse hors Azure. Plus coûteux et plus
-risqué, pour un résultat équivalent.
+**Alternative — [DEPLOIEMENT.md](DEPLOIEMENT.md)** : Azure App Service, palier
+gratuit, sans aucune modification de pare-feu puisque les ressources Azure sont
+déjà autorisées.
 
 `/api/health` est la seule route accessible sans authentification : elle
 n'ouvre aucune connexion aux bases et ne révèle ni version, ni configuration.

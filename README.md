@@ -141,6 +141,16 @@ npm run test:api   # nécessite « npm run dev » dans un autre terminal
 de lecture passent, et qu'aucun secret ne se retrouve dans les données
 extraites ni dans le bundle client.
 
+## Utilisation locale
+
+Pour un usage sur un seul poste, sans hébergement : deux raccourcis sur le
+bureau suffisent à démarrer et arrêter l'application, et un troisième la lance
+à l'ouverture de session. Voir **[local/README.md](local/README.md)**.
+
+L'accès est alors limité à la machine (`127.0.0.1`) et non authentifié — le
+mode développement l'indique par un bandeau permanent. Les collègues n'y ont
+pas accès : cela suppose un hébergement.
+
 ## Déploiement
 
 Les serveurs SQL n'ont **aucune ouverture vers Internet** : ils acceptent les

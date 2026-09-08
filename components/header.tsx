@@ -8,7 +8,7 @@ export function Header({
   user,
   active,
 }: {
-  user: { name: string; email: string } | null
+  user: { name: string; email: string; isDevBypass?: boolean } | null
   active?: 'clients' | 'dashboard'
 }) {
   return (
@@ -30,9 +30,14 @@ export function Header({
           </NavLink>
         </nav>
 
-        <div className="ml-auto">
-          <UserMenu user={user} />
-        </div>
+        {/* En acces local sans Entra ID, il n'y a pas de session : ni identite
+            a afficher, ni deconnexion qui aurait un sens. Le menu n'apparait
+            donc que lorsqu'une authentification reelle est en place. */}
+        {user?.isDevBypass ? null : (
+          <div className="ml-auto">
+            <UserMenu user={user} />
+          </div>
+        )}
       </div>
     </header>
   )

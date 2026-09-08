@@ -22,10 +22,15 @@ du poste, il faut un hébergement — voir [DEPLOIEMENT.md](../DEPLOIEMENT.md).
 ## Accès : ce poste uniquement
 
 Le serveur écoute sur `127.0.0.1`, donc **uniquement depuis cette machine**.
-C'est délibéré : sans Entra ID configuré, l'application démarre en mode
-développement, où l'accès local est autorisé sans authentification — un bandeau
-le signale en permanence. Une application non authentifiée ne doit pas être
-exposée au réseau.
+C'est délibéré, et c'est la seule protection qui reste : sans Entra ID
+configuré, l'application démarre en mode développement, où l'accès local est
+autorisé sans authentification. Il n'y a donc ni page de connexion, ni
+déconnexion — elles n'auraient rien à protéger sur un poste. En contrepartie,
+le serveur ne sort pas de la machine.
+
+**En production, le comportement est inchangé** : l'authentification Entra ID
+est exigée, et une configuration incomplète fait refuser l'accès au lieu de
+l'ouvrir.
 
 Conséquence : **vos collègues ne peuvent pas s'y connecter.** Leur donner accès
 suppose soit un hébergement, soit la configuration d'Entra ID.

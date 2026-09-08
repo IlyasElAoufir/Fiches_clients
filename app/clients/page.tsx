@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { SearchX, ShieldAlert } from 'lucide-react'
+import { SearchX } from 'lucide-react'
 
 import { Header } from '@/components/header'
 import { ClientCard, ClientCardSkeleton } from '@/components/client-card'
@@ -37,8 +37,6 @@ export default async function ClientsPage({
   return (
     <>
       <Header user={user} active="clients" />
-
-      {user.isDevBypass ? <DevBypassBanner /> : null}
 
       <main className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6">
         <div className="mb-7">
@@ -98,16 +96,6 @@ function ClientGridSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <ClientCardSkeleton key={i} />
       ))}
-    </div>
-  )
-}
-
-function DevBypassBanner() {
-  return (
-    <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
-      <ShieldAlert className="mr-1.5 inline h-4 w-4 align-text-bottom" aria-hidden />
-      Mode développement — authentification Microsoft non configurée. L’accès est
-      ouvert localement, mais serait refusé en production.
     </div>
   )
 }

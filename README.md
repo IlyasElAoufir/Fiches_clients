@@ -147,9 +147,10 @@ Pour un usage sur un seul poste, sans hébergement : deux raccourcis sur le
 bureau suffisent à démarrer et arrêter l'application, et un troisième la lance
 à l'ouverture de session. Voir **[local/README.md](local/README.md)**.
 
-L'accès est alors limité à la machine (`127.0.0.1`) et non authentifié — le
-mode développement l'indique par un bandeau permanent. Les collègues n'y ont
-pas accès : cela suppose un hébergement.
+L'accès est alors limité à la machine (`127.0.0.1`) et non authentifié : sur un
+poste, une page de connexion et une déconnexion n'auraient rien à protéger,
+elles ne sont donc pas affichées. Les collègues n'y ont pas accès — cela
+suppose un hébergement, et l'authentification redevient alors obligatoire.
 
 ## Déploiement
 

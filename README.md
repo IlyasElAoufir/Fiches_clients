@@ -143,19 +143,12 @@ extraites ni dans le bundle client.
 
 ## Déploiement
 
-Les serveurs SQL n'ont **aucune ouverture vers Internet** : ils n'acceptent que
-les adresses explicitement autorisées et les ressources Azure. Un hébergeur
-situé hors d'Azure (Vercel, Netlify, Render, Fly.io…) est donc **bloqué par le
-pare-feu**, et modifier les règles de pare-feu n'entre pas dans le périmètre de
-ce projet.
+Les serveurs SQL n'ont **aucune ouverture vers Internet** : un hébergeur situé
+hors d'Azure est bloqué par le pare-feu. **Azure App Service** est l'option
+adaptée — palier B1 minimum pour une disponibilité continue, le palier gratuit
+s'arrêtant net une fois son quota CPU quotidien atteint.
 
-**Azure App Service** est l'option adaptée : l'application s'y trouve déjà du
-bon côté du pare-feu. Le palier gratuit convient à un usage interne léger ; un
-palier payant d'entrée de gamme apporte le confort (pas de démarrage à froid,
-domaine personnalisé).
-
-Au déploiement, penser à `NEXTAUTH_URL` et à déclarer l'URI de redirection
-correspondante côté Entra ID.
+Procédure complète : **[DEPLOIEMENT.md](DEPLOIEMENT.md)**.
 
 ## Licence
 

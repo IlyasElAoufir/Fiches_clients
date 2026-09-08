@@ -24,7 +24,25 @@ import type { ExcelClientSheet } from '@/types'
  *   npm run excel:extract
  */
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'excel-clients.json')
+/**
+ * Emplacement du fichier extrait.
+ *
+ * En local : `data/excel-clients.json`, genere par `npm run excel:extract`.
+ *
+ * En production : le fichier ne peut pas etre versionne — il contient les
+ * coordonnees des contacts clients — donc il n'est pas dans le paquet
+ * deploye. On le depose une fois dans le stockage persistant de l'hote et on
+ * pointe EXCEL_DATA_FILE dessus (sur Azure App Service Linux, tout ce qui est
+ * sous /home survit aux redemarrages et aux deploiements).
+ *
+ *   EXCEL_DATA_FILE=/home/data/excel-clients.json
+ *
+ * Consequence utile : mettre a jour les fiches ne demande plus de redeployer,
+ * il suffit de remplacer ce fichier.
+ */
+const DATA_FILE = process.env.EXCEL_DATA_FILE
+  ? path.resolve(process.env.EXCEL_DATA_FILE)
+  : path.join(process.cwd(), 'data', 'excel-clients.json')
 
 export const getExcelSheets = cache(async (): Promise<ExcelClientSheet[]> => {
   try {
@@ -32,8 +50,10 @@ export const getExcelSheets = cache(async (): Promise<ExcelClientSheet[]> => {
     return JSON.parse(raw) as ExcelClientSheet[]
   } catch {
     console.warn(
-      `[excel] ${DATA_FILE} introuvable. Lancez « npm run excel:extract » ` +
-        `pour générer les fiches depuis Fiches Clients.xlsx.`,
+      `[excel] ${DATA_FILE} introuvable — les fiches issues du classeur ` +
+        `seront absentes. En local : « npm run excel:extract ». ` +
+        `En production : deposez le fichier sur l'hote et renseignez ` +
+        `EXCEL_DATA_FILE.`,
     )
     return []
   }

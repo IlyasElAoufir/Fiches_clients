@@ -2,6 +2,9 @@
   "name": "novamap-clients",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9"
+  },
   "description": "Application interne Novamap — consultation centralisée des clients (LECTURE SEULE)",
   "scripts": {
     "dev": "next dev",

@@ -1,0 +1,75 @@
+# Déploiement sur Azure App Service.
+#
+# Prérequis, à faire une fois dans les paramètres du dépôt
+# (Settings → Secrets and variables → Actions) :
+#
+#   Secret   AZURE_WEBAPP_PUBLISH_PROFILE  contenu du profil de publication,
+#            téléchargé depuis le portail Azure (App Service → « Obtenir le
+#            profil de publication »)
+#   Variable AZURE_WEBAPP_NAME             nom de l'App Service
+#
+# Les variables d'environnement de l'application (SQL_*, AZURE_AD_*,
+# AUTH_SECRET, NEXTAUTH_URL…) ne passent PAS par ce fichier : elles se
+# renseignent dans App Service → Paramètres → Variables d'environnement.
+name: Déploiement Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Construction
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Contrôles
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run test:readonly
+
+      - run: npm run build
+
+      # `output: 'standalone'` produit .next/standalone/server.js mais n'y
+      # recopie ni les fichiers statiques ni public/ : c'est documenté et
+      # volontaire côté Next.js.
+      - name: Assemblage du paquet
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          if [ -d public ]; then cp -r public .next/standalone/public; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: application
+          path: .next/standalone
+
+  deploy:
+    name: Déploiement
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: application
+          path: .
+
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .

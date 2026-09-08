@@ -3,6 +3,11 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // Sortie autonome : `next build` produit .next/standalone/server.js, qui
+  // embarque les seules dependances necessaires. C'est ce qui est deploye sur
+  // Azure App Service (commande de demarrage : `node server.js`).
+  output: 'standalone',
+
   // `mssql` est un module Node natif : il ne doit jamais être bundlé côté client
   // ni transformé pour l'edge runtime.
   serverExternalPackages: ['mssql', 'tedious'],

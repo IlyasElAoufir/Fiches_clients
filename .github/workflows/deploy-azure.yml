@@ -42,7 +42,18 @@ jobs:
           npm run lint
           npm run test:readonly
 
-      - run: npm run build
+      # `config/env.ts` valide les variables des l'import : sans elles, la
+      # collecte des routes echoue. Le build n'ouvre aucune connexion — toutes
+      # les pages sont dynamiques, rien n'est pre-rendu depuis une base — donc
+      # des valeurs factices suffisent ici. Les vraies valeurs sont celles de
+      # l'App Service, jamais celles-ci.
+      - name: Construction
+        run: npm run build
+        env:
+          SQL_PROD_SERVER: build.invalid
+          SQL_INT_SERVER: build.invalid
+          SQL_USER: build
+          SQL_PASSWORD: build
 
       # `output: 'standalone'` produit .next/standalone/server.js mais n'y
       # recopie ni les fichiers statiques ni public/ : c'est documenté et

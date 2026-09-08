@@ -48,11 +48,19 @@ Supprimer le raccourci dans :
 
 Ou : `Win+R`, puis `shell:startup`.
 
+## Le serveur s'arrête tout seul
+
+Une commande `npm run build` lancée pendant que le serveur tourne **l'arrête** :
+la construction et le serveur de développement écrivent dans le même dossier
+`.next`. Si l'application devient injoignable après un build, c'est cela — il
+suffit de relancer par le raccourci.
+
 ## Si l'application ne s'ouvre pas
 
 1. Vérifier que le port 3000 est libre :
    `netstat -ano | findstr :3000`
-2. Lancer le script en fenêtre visible pour lire l'erreur :
+2. Le raccourci affiche désormais une fenêtre d'avertissement en cas d'échec.
+   Pour le détail, lancer en fenêtre visible :
    `powershell -NoProfile -ExecutionPolicy Bypass -File local\demarrer.ps1`
 3. Une erreur « Variable d'environnement manquante » signifie que `.env.local`
    est absent ou incomplet — voir [.env.example](../.env.example).

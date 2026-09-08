@@ -143,13 +143,19 @@ extraites ni dans le bundle client.
 
 ## Déploiement
 
-Les serveurs SQL n'ont **aucune ouverture vers Internet** : un hébergeur situé
-hors d'Azure est bloqué par le pare-feu. L'application tourne donc sur **Azure
-App Service**, sur le palier gratuit, maintenu éveillé par un appel régulier à
-`/api/health` — le palier gratuit ne proposant pas « Always On ».
+Les serveurs SQL n'ont **aucune ouverture vers Internet** : ils acceptent les
+adresses explicitement autorisées et les ressources Azure. C'est la contrainte
+qui commande le choix de l'hébergeur.
 
-Procédure complète, contraintes du palier gratuit et bascule éventuelle vers
-un palier payant : **[DEPLOIEMENT.md](DEPLOIEMENT.md)**.
+- **[DEPLOIEMENT-GCP.md](DEPLOIEMENT-GCP.md)** — Cloud Run, avec une adresse de
+  sortie fixe à faire autoriser au pare-feu. Voie retenue pour le domaine
+  personnalisé.
+- **[DEPLOIEMENT.md](DEPLOIEMENT.md)** — Azure App Service, qui ne demande
+  aucune modification du pare-feu.
+
+L'application expose `/api/health`, seule route accessible sans
+authentification : elle n'ouvre aucune connexion aux bases et ne révèle ni
+version ni configuration.
 
 ## Licence
 

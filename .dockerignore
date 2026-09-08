@@ -1,0 +1,19 @@
+# Le contexte de build ne doit contenir ni secret, ni donnee personnelle.
+.env
+.env.*
+!.env.example
+*.local.*
+# Coordonnees des contacts clients : montees a l'execution depuis un
+# bucket, jamais figees dans une couche d'image.
+data/excel-clients.json
+docs-internes-*.md
+tools/out/
+
+node_modules
+.next
+.git
+.github
+*.tsbuildinfo
+npm-debug.log*
+__pycache__/
+*.pyc

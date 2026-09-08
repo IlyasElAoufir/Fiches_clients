@@ -16,25 +16,44 @@ Azure App Service est déjà du bon côté du pare-feu : aucune règle à ajoute
 
 ## Choix du palier
 
-| | Gratuit (F1) | **Base (B1)** |
+Le déploiement décrit ici vise le **palier gratuit F1**, choisi
+délibérément. Il faut en connaître les contraintes, car aucune ne se
+contourne :
+
+| | Gratuit (F1) | Base (B1) |
 |---|---|---|
-| Disponibilité continue | ❌ l'app est déchargée après ~20 min d'inactivité | ✅ option « Always On » |
-| Quota CPU | 60 min/jour, puis **erreur 403 jusqu'au lendemain** | aucun |
-| Démarrage à froid | 20 à 60 s | aucun |
+| Coût | 0 € | ~13 €/mois |
+| « Always On » | ❌ indisponible | ✅ |
+| Quota processeur | **60 min/jour**, puis erreur 403 jusqu'au lendemain | aucun |
+| Trafic sortant | plafonné (de l'ordre de 165 Mo/jour) | non plafonné |
 | Mémoire | 1 Go | 1,75 Go |
 
-**Pour un usage quotidien par une équipe, prendre B1.** Le palier gratuit
-n'est pas un B1 plus lent : il s'arrête net une fois le quota atteint, et
-chaque redémarrage à froid consomme ce quota.
+Deux conséquences pratiques :
+
+1. **Sans « Always On », l'application est déchargée après une vingtaine de
+   minutes sans requête.** La visite suivante paie 20 à 60 secondes de
+   démarrage, et ce démarrage consomme du quota. C'est le poste de dépense
+   principal — d'où l'étape 5, qui maintient l'application éveillée.
+2. **Le quota est journalier et sans préavis.** Une fois les 60 minutes
+   atteintes, App Service renvoie une erreur 403 à tout le monde jusqu'à
+   minuit UTC.
+
+Pour une quinzaine de personnes consultant des fiches dans la journée, la
+consommation réelle reste très en dessous du quota **à condition que
+l'application ne redémarre pas en permanence**. C'est jouable, et le risque
+est faible : si le quota est atteint, le passage en B1 se fait **depuis le
+portail, en un bouton — même application, même URL, aucun redéploiement**.
+
+Surveiller la consommation les premiers jours : App Service → Quotas.
 
 ## Installation
 
 ### 1. Créer l'App Service
 
 - Runtime **Node 22 LTS**, système **Linux**, région proche des serveurs SQL.
-- Palier **B1** ou supérieur.
-- Configuration → Général : **Always On = Activé**, commande de démarrage
-  `node server.js`.
+- Palier **F1 (Gratuit)**.
+- Configuration → Général : commande de démarrage `node server.js`.
+  (« Always On » n'existe pas sur F1 — voir l'étape 5.)
 
 ### 2. Déclarer l'application dans Microsoft Entra ID
 
@@ -85,7 +104,28 @@ Si le fichier est absent, l'application fonctionne mais l'onglet « Fiche »
 reste vide pour tous les clients, et un avertissement apparaît dans les
 journaux.
 
-### 5. Déploiement continu
+### 5. Maintenir l'application éveillée
+
+Indispensable sur F1, où « Always On » n'existe pas. L'application expose
+`/api/health` : la seule route accessible sans authentification. Elle n'ouvre
+aucune connexion aux bases et ne révèle rien — ni version, ni environnement.
+L'appeler régulièrement empêche le déchargement, donc les démarrages à froid,
+donc l'essentiel de la consommation de quota.
+
+Deux moyens, cumulables :
+
+- **Service de supervision externe** — le plus fiable. UptimeRobot et
+  équivalents surveillent une URL toutes les 5 minutes gratuitement. Pointer
+  sur `https://<nom-de-l-app>.azurewebsites.net/api/health`. Bénéfice
+  secondaire : vous êtes prévenu si l'application tombe.
+- **[.github/workflows/maintien-eveille.yml](.github/workflows/maintien-eveille.yml)**
+  — déjà dans le dépôt, appelle la même route toutes les 10 minutes. Il suffit
+  de renseigner la variable `AZURE_WEBAPP_URL`. Gratuit sur un dépôt public,
+  mais GitHub n'exécute les tâches planifiées qu'« au mieux » et les suspend
+  après 60 jours sans activité sur le dépôt : à considérer comme un filet, pas
+  comme la solution principale.
+
+### 6. Déploiement continu
 
 [.github/workflows/deploy-azure.yml](.github/workflows/deploy-azure.yml)
 construit et déploie à chaque push sur `main`. Deux réglages, une seule fois,
@@ -95,6 +135,7 @@ dans Settings → Secrets and variables → Actions :
 |---|---|---|
 | Secret | `AZURE_WEBAPP_PUBLISH_PROFILE` | profil de publication téléchargé depuis le portail |
 | Variable | `AZURE_WEBAPP_NAME` | nom de l'App Service |
+| Variable | `AZURE_WEBAPP_URL` | URL publique, pour le maintien en éveil |
 
 Le workflow refuse de déployer si `typecheck`, `lint` ou le contrôle de
 lecture seule échouent.
@@ -107,10 +148,19 @@ lecture seule échouent.
 - [ ] Le badge d'environnement affiche bien PROD ou INT.
 - [ ] L'onglet « Fiche » d'un client affiche des données (sinon : étape 4).
 - [ ] Les journaux ne contiennent ni mot de passe, ni chaîne de connexion.
+- [ ] `/api/health` répond `200` et ne renvoie que `{"status":"ok"}`.
+- [ ] Après 24 h : App Service → Quotas, vérifier la consommation
+      processeur. Si elle frôle les 60 minutes, passer en B1.
 
-## Alternative sans coût
+## Si le quota devient contraignant
 
-Si un serveur interne déjà autorisé par le pare-feu est disponible, il peut
+Deux issues. La première :
+**passer en B1** depuis le portail (App Service → Scale up), pour
+environ 13 €/mois. Même application, même URL, aucun redéploiement, et
+« Always On » devient disponible — le maintien en éveil de l'étape 5
+peut alors être désactivé.
+
+La seconde, sans coût : si un serveur interne déjà autorisé par le pare-feu est disponible, il peut
 héberger l'application (Node 22, `node server.js` derrière un reverse proxy
 avec TLS). Le coût est nul, en échange de l'exploitation à votre charge :
 mises à jour système, certificat, supervision, redémarrage automatique.

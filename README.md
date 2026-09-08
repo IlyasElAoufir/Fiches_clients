@@ -144,11 +144,12 @@ extraites ni dans le bundle client.
 ## Déploiement
 
 Les serveurs SQL n'ont **aucune ouverture vers Internet** : un hébergeur situé
-hors d'Azure est bloqué par le pare-feu. **Azure App Service** est l'option
-adaptée — palier B1 minimum pour une disponibilité continue, le palier gratuit
-s'arrêtant net une fois son quota CPU quotidien atteint.
+hors d'Azure est bloqué par le pare-feu. L'application tourne donc sur **Azure
+App Service**, sur le palier gratuit, maintenu éveillé par un appel régulier à
+`/api/health` — le palier gratuit ne proposant pas « Always On ».
 
-Procédure complète : **[DEPLOIEMENT.md](DEPLOIEMENT.md)**.
+Procédure complète, contraintes du palier gratuit et bascule éventuelle vers
+un palier payant : **[DEPLOIEMENT.md](DEPLOIEMENT.md)**.
 
 ## Licence
 

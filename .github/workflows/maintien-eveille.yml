@@ -1,0 +1,39 @@
+# Maintien en éveil de l'application.
+#
+# Le palier gratuit d'Azure App Service ne propose pas « Always On » :
+# l'application est déchargée après une vingtaine de minutes sans requête, et
+# la visite suivante paie un démarrage à froid de 20 à 60 secondes — qui
+# consomme lui-même du quota processeur. Un appel léger et régulier évite ces
+# redémarrages et coûte, au total, quelques secondes de processeur par jour.
+#
+# Réglage requis : variable AZURE_WEBAPP_URL (Settings → Secrets and variables
+# → Actions → Variables), par exemple https://mon-app.azurewebsites.net
+#
+# Limites à connaître : GitHub n'exécute les tâches planifiées qu'« au mieux »
+# et les suspend après 60 jours sans activité sur le dépôt. Pour un maintien
+# réellement fiable, un service de supervision externe (UptimeRobot et
+# équivalents proposent un palier gratuit à 5 minutes) est préférable.
+# Ce workflow ne coûte rien sur un dépôt public.
+name: Maintien en éveil
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    if: vars.AZURE_WEBAPP_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Appel du point de contrôle
+        run: |
+          code=$(curl --silent --show-error --location \
+                      --max-time 90 --retry 2 --retry-delay 15 \
+                      --output /dev/null --write-out '%{http_code}' \
+                      "${{ vars.AZURE_WEBAPP_URL }}/api/health")
+          echo "Réponse HTTP : $code"
+          test "$code" = "200"

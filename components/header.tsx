@@ -21,36 +21,49 @@ export function Header({
   const readAt = Date.now()
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-6 px-4 sm:px-6">
-        <Link href="/clients" className="flex items-baseline gap-2">
-          <span className="text-sm font-bold uppercase tracking-[0.18em] text-foreground">
-            Novamap
-          </span>
-          <span className="text-sm text-muted-foreground">Clients</span>
-        </Link>
+    <>
+      <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-6 px-4 sm:px-6">
+          <Link href="/clients" className="flex items-baseline gap-2">
+            <span className="text-sm font-bold uppercase tracking-[0.18em] text-foreground">
+              Novamap
+            </span>
+            <span className="text-sm text-muted-foreground">Clients</span>
+          </Link>
 
-        <nav className="flex items-center gap-1" aria-label="Navigation principale">
-          <NavLink href="/clients" icon={<LayoutGrid className="h-4 w-4" />} active={active === 'clients'}>
-            Clients
-          </NavLink>
-          <NavLink href="/dashboard" icon={<Users className="h-4 w-4" />} active={active === 'dashboard'}>
-            Vue globale
-          </NavLink>
-        </nav>
+          <nav className="flex items-center gap-1" aria-label="Navigation principale">
+            <NavLink
+              href="/clients"
+              icon={<LayoutGrid className="h-4 w-4" />}
+              active={active === 'clients'}
+            >
+              Clients
+            </NavLink>
+            <NavLink
+              href="/dashboard"
+              icon={<Users className="h-4 w-4" />}
+              active={active === 'dashboard'}
+            >
+              Vue globale
+            </NavLink>
+          </nav>
 
-        {/* En acces local sans Entra ID, il n'y a pas de session : ni identite
-            a afficher, ni deconnexion qui aurait un sens. Le menu n'apparait
-            donc que lorsqu'une authentification reelle est en place. */}
-        {user?.isDevBypass ? null : (
-          <div className="ml-auto">
-            <UserMenu user={user} />
-          </div>
-        )}
-      </div>
+          {/* En accès local sans Entra ID, il n'y a pas de session : ni identité
+              à afficher, ni déconnexion qui aurait un sens. Le menu n'apparaît
+              donc que lorsqu'une authentification réelle est en place. */}
+          {user?.isDevBypass ? null : (
+            <div className="ml-auto">
+              <UserMenu user={user} />
+            </div>
+          )}
+        </div>
+      </header>
 
+      {/* Hors du <header> : son `backdrop-blur` ferait de lui le bloc conteneur
+          de tout descendant `position: fixed`, et la pastille se calerait en
+          haut de l'écran, par-dessus la navigation. */}
       <StatusBadge env={env} readAt={readAt} />
-    </header>
+    </>
   )
 }
 

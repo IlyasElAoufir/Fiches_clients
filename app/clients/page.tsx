@@ -36,7 +36,7 @@ export default async function ClientsPage({
 
   return (
     <>
-      <Header user={user} active="clients" />
+      <Header user={user} active="clients" env={env} />
 
       <main className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6">
         <div className="mb-7">

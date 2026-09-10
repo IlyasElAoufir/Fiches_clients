@@ -1,16 +1,25 @@
 import Link from 'next/link'
 import { LayoutGrid, Users } from 'lucide-react'
 
+import { StatusBadge } from '@/components/status-badge'
 import { UserMenu } from '@/components/user-menu'
 import { cn } from '@/lib/utils'
+import type { EnvId } from '@/config/environments'
 
 export function Header({
   user,
   active,
+  env,
 }: {
   user: { name: string; email: string; isDevBypass?: boolean } | null
   active?: 'clients' | 'dashboard'
+  /** Environnement interrogé, affiché par la pastille d'état. */
+  env?: EnvId | 'ALL'
 }) {
+  // Les pages sont rendues à chaque requête : l'instant du rendu est donc
+  // bien celui de la lecture des bases.
+  const readAt = Date.now()
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-6 px-4 sm:px-6">
@@ -39,6 +48,8 @@ export function Header({
           </div>
         )}
       </div>
+
+      <StatusBadge env={env} readAt={readAt} />
     </header>
   )
 }

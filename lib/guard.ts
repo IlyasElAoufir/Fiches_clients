@@ -2,7 +2,7 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 
 import { auth } from '@/lib/auth'
-import { isAuthConfigured, serverEnv } from '@/config/env'
+import { isAuthConfigured, isLocalNoAuth, serverEnv } from '@/config/env'
 
 /**
  * Contrôle d'accès des pages.
@@ -28,6 +28,13 @@ export interface AppUser {
 
 const IS_DEV = process.env.NODE_ENV === 'development'
 
+/**
+ * Acces local admis sans authentification : soit en developpement, soit sur un
+ * poste ou l'application a ete lancee explicitement en mode local (voir
+ * `isLocalNoAuth`). Dans tous les autres cas, l'authentification est exigee.
+ */
+const ACCES_LOCAL = IS_DEV || isLocalNoAuth
+
 function emailDomainAllowed(email: string): boolean {
   const domain = email.split('@')[1]?.toLowerCase()
   return Boolean(domain) && serverEnv.auth.allowedDomains.includes(domain!)
@@ -36,9 +43,9 @@ function emailDomainAllowed(email: string): boolean {
 /** Exige une session valide, sinon redirige vers /login. */
 export async function requireUser(): Promise<AppUser> {
   if (!isAuthConfigured) {
-    if (IS_DEV) {
+    if (ACCES_LOCAL) {
       return {
-        name: 'Développement local',
+        name: 'Accès local',
         email: 'dev@localhost',
         isDevBypass: true,
       }
@@ -68,10 +75,10 @@ export async function checkApiAccess(): Promise<
   { ok: true; user: AppUser } | { ok: false; status: 401 | 403; message: string }
 > {
   if (!isAuthConfigured) {
-    if (IS_DEV) {
+    if (ACCES_LOCAL) {
       return {
         ok: true,
-        user: { name: 'Développement local', email: 'dev@localhost', isDevBypass: true },
+        user: { name: 'Accès local', email: 'local@poste', isDevBypass: true },
       }
     }
     return {

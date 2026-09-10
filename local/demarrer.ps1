@@ -1,22 +1,22 @@
 param(
-    # Utilise par le demarrage automatique a l'ouverture de session : lance le
-    # serveur sans ouvrir de fenetre de navigateur.
+    # Utilise par le demarrage automatique : ni fenetre, ni navigateur.
     [switch]$SansNavigateur
 )
 
 # Lancement local de Novamap Clients.
 #
-# Le serveur n'ecoute que sur 127.0.0.1 : sans Entra ID configure l'acces n'est
-# pas authentifie, il ne doit donc pas sortir de la machine.
+# On fait tourner la version de PRODUCTION (`next start`), qui demarre en une
+# seconde, et non le mode developpement qui recompile a chaque depart a froid —
+# plusieurs minutes, sans le moindre signe a l'ecran.
 #
-# Si le serveur tourne deja, ce script se contente d'ouvrir le navigateur.
+# L'ecoute est restreinte a 127.0.0.1, et ACCES_LOCAL_SANS_AUTH n'est accepte
+# par l'application que dans ce cas precis (voir config/env.ts).
 
 $ErrorActionPreference = 'Stop'
 $Racine  = Split-Path -Parent $PSScriptRoot
 $Port    = 3000
 $Base    = "http://127.0.0.1:$Port"
 $Url     = "$Base/clients"
-$Attente = 180
 
 function Test-Repond {
     try {
@@ -29,21 +29,18 @@ function Test-PortOccupe {
     return $null -ne (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)
 }
 
-# Le script tourne fenetre masquee : sans cela, un echec serait totalement
-# silencieux et l'utilisateur resterait devant un navigateur en erreur.
 function Show-Erreur($message) {
+    if ($SansNavigateur) { Write-Warning $message; return }
     Add-Type -AssemblyName PresentationFramework -ErrorAction SilentlyContinue
     [System.Windows.MessageBox]::Show($message, 'Novamap Clients', 'OK', 'Warning') | Out-Null
 }
 
+# --- Deja en route ? --------------------------------------------------------
 if (Test-Repond) {
     if (-not $SansNavigateur) { Start-Process $Url }
     exit 0
 }
 
-# Port pris mais aucune reponse : un serveur est reste dans un etat bancal.
-# Le relancer par-dessus ferait basculer Next.js sur un autre port, ce qui
-# donne une application joignable a une adresse inattendue.
 if (Test-PortOccupe) {
     Show-Erreur "Le port $Port est occupe par un programme qui ne repond pas.`n`nUtilisez le raccourci « Novamap Clients - Arreter », puis relancez."
     exit 1
@@ -56,14 +53,42 @@ if (-not (Test-Path (Join-Path $Racine 'node_modules'))) {
     exit 1
 }
 
-# Mode developpement assume : c'est le seul mode ou l'application autorise un
-# acces local sans Entra ID.
+# --- Construction, uniquement si elle manque --------------------------------
+# `next dev` et `next build` ecrivent dans le meme dossier .next et s'ecrasent
+# mutuellement : BUILD_ID absent signifie qu'il faut reconstruire.
+if (-not (Test-Path (Join-Path $Racine '.next\BUILD_ID'))) {
+    if ($SansNavigateur) {
+        # Au demarrage de session, on ne lance pas une construction longue en
+        # silence : le raccourci du bureau s'en chargera, avec sa fenetre.
+        Write-Warning 'Application non construite ; lancez le raccourci du bureau.'
+        exit 1
+    }
+    Write-Host ''
+    Write-Host '  Premiere preparation de Novamap Clients.' -ForegroundColor Cyan
+    Write-Host '  Cela ne se produit qu une fois, comptez une a deux minutes.'
+    Write-Host ''
+    & npm.cmd run build
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $Racine '.next\BUILD_ID'))) {
+        Show-Erreur "La construction a echoue.`n`nOuvrez un terminal dans :`n$Racine`npuis lancez : npm run build"
+        exit 1
+    }
+}
+
+# --- Demarrage --------------------------------------------------------------
+$env:HOSTNAME = '127.0.0.1'
+$env:ACCES_LOCAL_SANS_AUTH = '1'
+
+if (-not $SansNavigateur) {
+    Write-Host ''
+    Write-Host '  Demarrage de Novamap Clients...' -ForegroundColor Cyan
+}
+
 Start-Process -FilePath 'npm.cmd' `
-    -ArgumentList 'run','dev','--','-H','127.0.0.1','-p',"$Port" `
+    -ArgumentList 'run','start','--','-H','127.0.0.1','-p',"$Port" `
     -WorkingDirectory $Racine `
     -WindowStyle Hidden
 
-for ($i = 0; $i -lt $Attente; $i++) {
+for ($i = 0; $i -lt 90; $i++) {
     Start-Sleep -Seconds 1
     if (Test-Repond) {
         if (-not $SansNavigateur) { Start-Process $Url }
@@ -71,7 +96,5 @@ for ($i = 0; $i -lt $Attente; $i++) {
     }
 }
 
-if (-not $SansNavigateur) {
-    Show-Erreur "Le serveur n'a pas repondu en $Attente secondes.`n`nPour voir l'erreur, ouvrez un terminal dans :`n$Racine`npuis lancez : npm run dev"
-}
+Show-Erreur "Le serveur n'a pas repondu en 90 secondes.`n`nPour voir l'erreur, ouvrez un terminal dans :`n$Racine`npuis lancez : npm run start"
 exit 1

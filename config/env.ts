@@ -57,3 +57,33 @@ export const isAuthConfigured =
   serverEnv.auth.clientId !== '' &&
   serverEnv.auth.clientSecret !== '' &&
   serverEnv.auth.tenantId !== ''
+
+/**
+ * Mode « poste local, sans authentification ».
+ *
+ * Destine a l'application lancee sur un poste par les raccourcis de `local/`.
+ * En production, l'absence d'Entra ID fait normalement REFUSER l'acces ; ce
+ * mode est la seule exception, et il est verrouille par trois conditions
+ * cumulatives :
+ *
+ *   1. Entra ID n'est pas configure — des qu'il l'est, il reprend la main ;
+ *   2. ACCES_LOCAL_SANS_AUTH vaut « 1 », choix explicite, jamais par defaut ;
+ *   3. le serveur ecoute sur une adresse de boucle locale.
+ *
+ * La troisieme condition est la garantie de fond : une instance hebergee
+ * ecoute sur 0.0.0.0 et ne peut donc pas activer ce mode, meme si la variable
+ * traine dans sa configuration. Ne la definissez jamais sur un serveur.
+ */
+export const isLocalNoAuth = (() => {
+  if (isAuthConfigured) return false
+  if (optional('ACCES_LOCAL_SANS_AUTH') !== '1') return false
+  const bind = optional('HOSTNAME').toLowerCase()
+  return bind === '127.0.0.1' || bind === '::1' || bind === 'localhost'
+})()
+
+if (isLocalNoAuth) {
+  console.warn(
+    '[auth] Mode local sans authentification : ecoute restreinte a la boucle ' +
+      'locale. A ne jamais activer sur un serveur.',
+  )
+}

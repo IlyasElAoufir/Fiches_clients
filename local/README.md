@@ -22,9 +22,11 @@ du poste, il faut un hébergement — voir [DEPLOIEMENT.md](../DEPLOIEMENT.md).
 ## Accès : ce poste uniquement
 
 Le serveur écoute sur `127.0.0.1`, donc **uniquement depuis cette machine**.
-C'est délibéré, et c'est la seule protection qui reste : sans Entra ID
-configuré, l'application démarre en mode développement, où l'accès local est
-autorisé sans authentification. Il n'y a donc ni page de connexion, ni
+C'est délibéré, et c'est la protection de fond. L'accès sans authentification
+n'est accordé que si trois conditions sont réunies : Entra ID n'est pas
+configuré, la variable `ACCES_LOCAL_SANS_AUTH` vaut `1` — le raccourci la
+positionne — et le serveur écoute sur la boucle locale. Une instance hébergée
+écoutant sur `0.0.0.0`, elle ne peut pas activer ce mode, même par accident. Il n'y a donc ni page de connexion, ni
 déconnexion — elles n'auraient rien à protéger sur un poste. En contrepartie,
 le serveur ne sort pas de la machine.
 
@@ -48,12 +50,18 @@ Supprimer le raccourci dans :
 
 Ou : `Win+R`, puis `shell:startup`.
 
-## Le serveur s'arrête tout seul
+## Comment ça démarre
 
-Une commande `npm run build` lancée pendant que le serveur tourne **l'arrête** :
-la construction et le serveur de développement écrivent dans le même dossier
-`.next`. Si l'application devient injoignable après un build, c'est cela — il
-suffit de relancer par le raccourci.
+Le raccourci lance la **version de production**, qui démarre en une dizaine de
+secondes. Une fenêtre affiche ce qui se passe, puis le navigateur s'ouvre.
+
+Au tout premier lancement — ou après une modification du code — l'application
+doit être construite au préalable : la fenêtre l'annonce et compte une à deux
+minutes. Cela n'arrive qu'une fois.
+
+Si vous travaillez sur le code avec `npm run dev`, sachez que `next dev` et
+`next build` écrivent dans le même dossier `.next` et s'écrasent mutuellement.
+Après une session de développement, le raccourci reconstruira donc une fois.
 
 ## Si l'application ne s'ouvre pas
 
